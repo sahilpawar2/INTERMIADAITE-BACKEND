@@ -1,0 +1,19 @@
+{
+  "name": "backend-project",
+  "version": "1.0.0",
+  "description": "better understandin of the production level backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "backend",
+    "node",
+    "sahil"
+  ],
+  "author": "sahil pawar",
+  "license": "ISC",
+  "dependencies": {
+    "node": "^22.10.0"
+  }
+}
