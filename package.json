@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "better understandin of the production level backend",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "backend",
@@ -15,5 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "node": "^22.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
   }
 }
