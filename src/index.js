@@ -6,6 +6,16 @@ dotenv.config({
 })
 
 ConnectDb()
+.then(() => {
+    app.listen(process.env.PORT, () => {
+        console.log("YOUR SEVER IS RUNNIGN ON : " + process.env.PORT)
+    })
+})
+.catch(
+    (err) => {
+        console.log("MONGODB CONNECTION FAILED : ", err)
+    }
+)
 // const app = express();
 
 // (async() => {
