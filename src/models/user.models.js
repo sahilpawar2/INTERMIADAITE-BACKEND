@@ -1,4 +1,7 @@
 import mongoose, {Schema} from "mongoose";
+import jwt from 'jsonwebtoken';
+import bcrypt from  'bcrypt';
+
 
 const userSchema = new Schema(
     {
@@ -46,6 +49,38 @@ const userSchema = new Schema(
 
     }, 
 {timestamps : true})
+
+userSchema.pre("send", async function(next){        // .pre is a hook (middleware which basically encrypt sensitive data)
+    if(!this.isModified('password')) return next();  //this functionm will encrypt password when modefied
+    this.password = bcrypt.hash(this.password, 10)
+    next()
+})
+
+userSchema.methods.isPasswordCorrect = async function(password){    //this is method is use to compare the password to the actual db stored password
+    return await bcrypt.compare(password, this.password)    // return value in boolean
+}
+
+userSchema.methods.generateAccessToken = function(){
+    const payload = {
+        _id : this._id,
+        email : this.email,
+        userName : this.userName,
+        fullName : this.fullName
+    }
+    process.env.ACCESS_TOKEN_SECRET ,
+    {
+        expiresIn : process.env.ACCESS_TOKEN_EXPIRY
+    }
+}
+userSchema.methods.generateRefreshToken = function(){
+    const payload = {
+        _id : this._id
+    }
+    process.env.REFRESH_TOKEN_SECRET ,
+    {
+        expiresIn : process.env.REFRESH_TOKEN_EXPIRY
+    }
+}
 
 
 export const  User = mongoose.model("User", userSchema);
