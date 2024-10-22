@@ -14,4 +14,10 @@ app.use(urlencoded({extended: true, limit: "16kb"}))   // allow to encode the ur
 app.use(express.static('public'))  // allow to store the files and pdf to the public folder
 app.use(cookieParser())
 
+//routes import
+import userRouter from "./routes/user.routes.js";
+
+app.use('/api/v1/user',  userRouter)
+
+
 export {app}
