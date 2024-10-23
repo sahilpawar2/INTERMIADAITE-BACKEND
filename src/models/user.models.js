@@ -52,7 +52,7 @@ const userSchema = new Schema(
 
 userSchema.pre("send", async function(next){        // .pre is a hook (middleware which basically encrypt sensitive data)
     if(!this.isModified('password')) return next();  //this functionm will encrypt password when modefied
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
