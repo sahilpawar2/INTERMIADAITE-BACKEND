@@ -4,6 +4,19 @@ import { User } from '../models/user.models.js';
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
 
+const generateAccessRefreshToken = async(userId)  => {
+
+        try {
+            const user = await User.findById(userId)
+            const accessToken = user.generateAccessToken()
+            const refreshToken = user.generateRefreshToken()
+            user.refreshToken = refreshToken
+            await user.save({validateBeforeSave : false})
+            return {accessToken, refreshToken}
+        } catch (error) {
+            throw new APIErros(500, "SOMETHIG WENT WORNGE WHILE GENERATING ACCESS TOKEN AND REFRESH TOKEN")
+        }
+}
 
 const registerUser = asyncHandler(async(req, res) =>{
     
@@ -26,7 +39,7 @@ const registerUser = asyncHandler(async(req, res) =>{
     }
     
     // check if same userName email exist
-    const expectedUser = User.findOne({
+    const expectedUser = await User.findOne({
         $or : [{userName}, {email}]
     })
 
@@ -35,14 +48,22 @@ const registerUser = asyncHandler(async(req, res) =>{
     }
 
     const avatarLocalFile = req.files?.avatar[0]?.path;
-    const coverImageLocalFile = req.files?.coverImage[0]?.path;
+    // const coverImageLocalFile = req.files?.coverImage[0]?.path;
+
+    let coverImageLocalPath;
+    // if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+    //     coverImageLocalFile = req.files.coverImage[0].path
+    // }
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     if(!avatarLocalFile) {
         throw new APIErros(400, "AVATARFILE IS REQUIRED")
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalFile);
-    const coverImage = await uploadOnCloudinary(coverImageLocalFile);
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
     if(!avatar){
         throw new APIErros(500, "AVATAR FILE IS NOT UPLOADED")
@@ -53,7 +74,8 @@ const registerUser = asyncHandler(async(req, res) =>{
     const user = await User.create({     // use await because it will create object in the db so itll take time
         fullName,
         avatar : avatar.url,
-        coverImage : coverImage?.url,
+        coverImage : coverImage?.url || " ",
+
         email,
         password,
         userName : userName.toUpperCase()
@@ -61,7 +83,7 @@ const registerUser = asyncHandler(async(req, res) =>{
 
     // checkeing if user is created or not
     const createdUser = await User.findById(user._id).select(
-        "-passowrd -refreshToken"  /// select which filed does not want to ckeck
+        "-password -refreshToken"  /// select which filed does not want to ckeck
     )
 
     if(!createdUser){
@@ -73,7 +95,46 @@ const registerUser = asyncHandler(async(req, res) =>{
     )
     
 })
+const userLoggedIn = asyncHandler(async(req, res) =>{
+    const {email, userName, password} = req.body
+    if(!userName || email){
+        throw new APIErros(400, "USERNAME OR EMAIL IS REQUIRED")
+    }
+    const user = User.findOne({
+        $or : [{userName}, {email}]
+    })
+    if(!user){
+        throw new APIErros(404, "USER DOESNT EXIST PLEASE REGISTER")
+    }
+    const isPasswordValid = await user.isPasswordCorrect(password) 
+    if(!isPasswordValid){
+        throw new ApiError(401, 'PASSWORD IS INCORECT')
+    }
+    const{ accessToken, refreshToken} = await generateAccessRefreshToken(user._id)
+    const loggedInUser = await  User.findById(user._id).select('-password -refreshToken')
+    const option = {
+        httpOnly : true,
+        secure : true
+    }
+    return res
+    .status(200)
+    .cookie('accessToken', accessToken, options)
+    .cookie('refreshToken', refreshToken, options)
+    .json(
+        new ApiResponse(
+            200, 
+            {
+                user :loggedInUser, accessToken, refreshToken
+            }, 
+            "USER LOGGED IN SUCCESSFULLY"
+        )
+    ) 
+})
 
-export {registerUser}
+export {
+    registerUser, 
+    userLoggedIn
+}
+
 
 

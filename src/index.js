@@ -35,3 +35,15 @@ ConnectDb()
 //         throw error
 //     }
 // })()
+
+
+
+/**connectDB().then(// take a callback () => {
+ * app.listen(// port from env variable, callback() =>{
+ * console.log("YOUR SEVER IS RUNNIGN ON : " + process.env.PORT)
+ * })
+}).catch(
+    (err) => {
+    console.log(err)
+        }
+)  */
